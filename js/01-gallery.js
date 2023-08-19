@@ -2,57 +2,42 @@ import { galleryItems } from "./gallery-items.js";
 // Change code below this line
 
 console.log(galleryItems);
+const galleryList = document.querySelector(".gallery");
+let currentLightboxInstance = null;
 
-const gallery = document.querySelector(".gallery");
-let activeModal = null;
+const galleryItemsMarkup = galleryItems
+  .map(
+    (item) => `
+  <li class="gallery__item">
+    <a class="gallery__link" href="${item.original}">
+      <img class="gallery__image" src="${item.preview}" data-source="${item.original}" alt="${item.description}" />
+    </a>
+  </li>
+`
+  )
+  .join("");
 
-function createGalleryItem(item) {
-  const li = document.createElement("li");
-  li.classList.add("gallery__item");
+galleryList.insertAdjacentHTML("beforeend", galleryItemsMarkup);
 
-  const link = document.createElement("a");
-  link.classList.add("gallery__link");
-  link.href = item.original;
+galleryList.addEventListener("click", (event) => {
+  event.preventDefault();
 
-  const image = document.createElement("img");
-  image.classList.add("gallery__image");
-  image.src = item.preview;
-  image.alt = item.description;
-  image.setAttribute("data-source", item.original);
+  if (event.target.tagName === "IMG") {
+    const largeImageUrl = event.target.getAttribute("data-source");
+    const lightbox = basicLightbox.create(`
+      <img src="${largeImageUrl}" alt="${event.target.alt}" />
+    `);
 
-  link.appendChild(image);
-  li.appendChild(link);
-
-  return li;
-}
-
-galleryItems.forEach((item) => {
-  const galleryItem = createGalleryItem(item);
-  gallery.appendChild(galleryItem);
-});
-
-gallery.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("gallery__image")) {
-    const source = e.target.getAttribute("data-source");
-
-    activeModal = basicLightbox.create(`
-            <img src="${source}" width="800" height="600">
-        `);
-
-    activeModal.show();
-
-    document.addEventListener("keydown", handleEscapeKey);
+    lightbox.show();
+    currentLightboxInstance = lightbox;
+    document.addEventListener("keydown", onEscapeKeyDown);
   }
 });
 
-function handleEscapeKey(e) {
-  if (e.key === "Escape") {
-    if (activeModal) {
-      activeModal.close();
-      activeModal = null;
-    }
-
-    document.removeEventListener("keydown", handleEscapeKey);
+function onEscapeKeyDown(event) {
+  if (event.key === "Escape" && currentLightboxInstance) {
+    currentLightboxInstance.close();
+    document.removeEventListener("keydown", onEscapeKeyDown);
+    currentLightboxInstance = null;
   }
 }
